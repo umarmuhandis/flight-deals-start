@@ -3,19 +3,19 @@ from amadeus import Client, ResponseError
 from dotenv import load_dotenv
 from datetime import datetime, timedelta
 
-# Load environment variables from .env file
+
 load_dotenv()
 
 
 class FlightSearch:
-    # This class is responsible for talking to the Flight Search API.
+
     def __init__(self):
         self.amadeus = Client(
             client_id=os.environ.get("AMADEUS_API_KEY"),
             client_secret=os.environ.get("AMADEUS_API_SECRET"),
         )
         self.origin_city = "Dubai"
-        self.default_origin_code = "DXB"  # Dubai International Airport code
+        self.default_origin_code = "DXB"
 
     def get_city_code(self, city_name):
         try:

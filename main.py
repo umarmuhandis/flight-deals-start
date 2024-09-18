@@ -1,5 +1,3 @@
-# This file will need to use the DataManager,FlightSearch, FlightData, NotificationManager classes to achieve the program requirements.
-
 from data_manager import DataManager
 from flight_search import FlightSearch
 from notification_manager import send_whatsapp, send_sms
@@ -8,7 +6,6 @@ from notification_manager import send_whatsapp, send_sms
 data_manager = DataManager()
 flight_search = FlightSearch()
 
-# Get all destinations from the Google Sheet
 destinations = data_manager.get_destination_data()
 
 for destination in destinations:
@@ -22,10 +19,8 @@ for destination in destinations:
         else:
             print(f"Could not find IATA code for {city_name}")
 
-# Search for flights to all destinations
 flight_results = flight_search.search_flights_for_cities(destinations)
 
-# Process the results and prepare a single message for all updates
 updates = []
 price_updates = []
 for city, data in flight_results.items():
@@ -46,12 +41,10 @@ for city, data in flight_results.items():
     else:
         print(f"No update needed for {city}. Current price is still the lowest.")
 
-# Send a single WhatsApp message with all updates
 if updates:
     message = "Lowest Price Alert!\n\n" + "\n\n".join(updates)
     send_whatsapp(message)
     send_sms(message)
-    # Update Google Sheet after sending the message
     for destination_id, new_price in price_updates:
         data_manager.update_lowest_price(destination_id, new_price)
     print("Google Sheet updated with new lowest prices.")
