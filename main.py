@@ -1,17 +1,14 @@
 from data_manager import DataManager
-from flight_search import FlightSearch
+from flight_search import get_city_code, search_flights_for_cities
 from notification_manager import send_whatsapp, send_sms
 
-
 data_manager = DataManager()
-flight_search = FlightSearch()
-
 destinations = data_manager.get_destination_data()
 
 for destination in destinations:
     if not destination.get("iataCode", ""):
         city_name = destination["city"]
-        iata_code = flight_search.get_city_code(city_name)
+        iata_code = get_city_code(city_name)
         if iata_code:
             print(f"Found IATA code for {city_name}: {iata_code}")
             data_manager.update_destination_codes(destination["id"], iata_code)
@@ -19,22 +16,30 @@ for destination in destinations:
         else:
             print(f"Could not find IATA code for {city_name}")
 
-flight_results = flight_search.search_flights_for_cities(destinations)
+filtered_destinations = [destination for destination in destinations if destination.get("iataCode")]
+
+flight_results = search_flights_for_cities(filtered_destinations)
 
 updates = []
 price_updates = []
+cheap_flights_found = False
+
 for city, data in flight_results.items():
-    destination = next((d for d in destinations if d["city"] == city), None)
+    destination = next((d for d in destinations if d["city"] == city), {})
     current_lowest_price = destination.get("lowestPrice", float("inf"))
     new_lowest_price = data["lowestPrice"]
 
     if new_lowest_price < current_lowest_price:
+        if not cheap_flights_found:
+            cheap_flights_found = True
+            print("Cheap flights found. Loading...")
+
         from_date = data.get("outbound_date", "N/A")
         to_date = data.get("inbound_date", "N/A")
+        stops = data.get("stops", "N/A")
         update_message = (
-            f"${new_lowest_price} to fly from "
-            f"{flight_search.origin_city}({flight_search.default_origin_code}) to {city}({data['iataCode']}), "
-            f"from {from_date} to {to_date}"
+            f"Lowest price for {city} has changed from ${current_lowest_price} to ${new_lowest_price}. "
+            f"Dubai(DXB) to {city}({data['iataCode']}), from {from_date} to {to_date}, with {stops} stop(s)."
         )
         updates.append(update_message)
         price_updates.append((destination["id"], new_lowest_price))
